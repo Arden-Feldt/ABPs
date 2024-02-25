@@ -18,16 +18,16 @@ echo "Are you running on Longleaf (y/n)?"
 read answer
 
 if [ -z "$answer" ]; then 
-    echo 'Inputs cannot be blank please try again!' 
+    echo 'Inputs cannot be blank please try again!'     
     exit 0 
 fi 
 
 if [ $answer == "y" ]; then
-    hoomd_path="$HOME/hoomd-blue/build"
+    hoomd_path="$HOME/miniconda3/pkgs/hoomd-3.0.0-cpu_py38hf4bb8e6_1/lib/python3.8/site-packages/hoomd/"
     script_path="$HOME/ABPs/post_proc"
     submit='sbatch'
 else
-    hoomd_path="$HOME/hoomd-blue/build"
+    hoomd_path="$HOME/miniconda3/pkgs/hoomd-3.0.0-cpu_py38hf4bb8e6_1/lib/python3.8/site-packages/hoomd/"
     script_path="$HOME/ABPs/post_proc"
     submit='sh'
 fi
@@ -35,7 +35,6 @@ fi
 current=$( date "+%m_%d_%y" )
 this_path="$( pwd )"
 
-mkdir averages
 mkdir ${current}_txt_files
 mkdir ${current}_pic_files
 mkdir ${current}_vid_files
@@ -88,53 +87,6 @@ if ! [[ "$time_step" =~ ^[+-]?[0-9]+\.?[0-9]*$ ]]; then
     exit 0 
 fi
 
-echo "Do you want to perform a measurement? (y/n)"
-read analyze
-
-if [ -z "$analyze" ]; then 
-    echo 'Inputs cannot be blank please try again!' 
-    exit 0 
-fi 
-
-if [ $analyze != "y" ] &&  [ $analyze != "n" ]; then
-    echo 'Input must correspond to given options!' 
-    exit 0 
-fi
-
-if [ $analyze == "y" ]; then
-    echo "Do you want to generate plots? (y/n)"
-    read plot
-
-    if [ -z "$plot" ]; then 
-    echo 'Inputs cannot be blank please try again!' 
-    exit 0 
-    fi 
-
-    if [ $plot != "y" ] &&  [ $plot != "n" ]; then
-        echo 'Input must correspond to given options!' 
-        exit 0 
-    fi
-fi
-
-
-echo "Do you want to generate videos? (y/n)"
-read vid
-
-if [ -z "$vid" ]; then 
-    echo 'Inputs cannot be blank please try again!' 
-    exit 0 
-fi 
-
-if [ $vid != "y" ] &&  [ $vid != "n" ]; then
-    echo 'Input must correspond to given options!' 
-    exit 0 
-fi
-
-if [ $vid == "n" ] && [ $plot == "n" ] && [ $analyze == "n" ]; then
-    echo 'You must specify either performing measurement or video creation as true to run code!' 
-    exit 0 
-fi
-
 echo "|----------------------------------------------------------------------|"
 echo "|      Possible simulation options and corresponding user inputs       |"
 echo "|          **************************************************          |"
@@ -167,8 +119,6 @@ echo "|        ----------------Segregation Properties-----------------       |"
 echo "| neighbors: probability of being neighbors for each species in cluster|"
 echo "| domain-size: size of domains of like-species within cluster          |"
 echo "| clustering-coefficient: clustering coefficient of particles          |"
-echo "| radial-heterogeneity: radial heterogeneity of interface              |"
-echo "| bulk-heterogeneity: spatial heterogeneity of bulk                    |"
 echo "|          ----------------Nematic Properties-----------------         |"
 echo "| nematic-order: nematic order of particles                            |"
 echo "| surface-align: alignment of particles toward cluster surface normal  |"
@@ -189,11 +139,9 @@ echo "| int-press-nlist: interparticle pressure of entire system             |"
 echo "| com-body-forces: interface pressure using center of mass             |"
 echo "| surface-body-forces: interface pressure using surface normal         |"
 echo "| bubble-body-forces: separate interface pressures using surface norm  |"
-echo "|           ----------------Utility Functions-----------------         |"
-echo "| gsd-to-csv: converts gsd file to csv format with relevant info       |"
 echo "|----------------------------------------------------------------------|"
 
-echo "What do you want to analyze or create plots/videos for?"
+echo "What do you want to analyze?"
 read method
 
 if [ -z "$method" ]; then 
@@ -219,6 +167,20 @@ if [ -z "$end_step" ]; then
     end_step="default"
 fi 
 
+echo "Do you want to generate plots? (y/n)"
+read plot
+
+if [ -z "$plot" ]; then 
+    echo 'Inputs cannot be blank please try again!' 
+    exit 0 
+fi 
+
+if [ $plot != "y" ] &&  [ $plot != "n" ]; then
+    echo 'Input must correspond to given options!' 
+    exit 0 
+fi
+
+
 if [ $method == "lattice_spacing" ]; then
   echo "Do you want to use parallel processing, namely for lattice spacing (y/n)?"
   read parallel
@@ -229,9 +191,9 @@ fi
 for file in $(ls *gsd)
 do
     if [ "$parallel" = "y" ]; then
-        $submit $script_path/analyze_binary_parallel.sh $hoomd_path $outpath $script_path $file $bin_size $time_step $method $analyze $plot $vid $os $start_step $end_step
+        $submit $script_path/analyze_binary_parallel.sh $hoomd_path $outpath $script_path $file $bin_size $time_step $method $plot $os
     elif [ "$parallel" = "n" ]; then
-        $submit $script_path/analyze_binary.sh $hoomd_path $outpath $script_path $file $bin_size $time_step $method $analyze $plot $vid $os $start_step $end_step
+        $submit $script_path/analyze_binary.sh $hoomd_path $outpath $script_path $file $bin_size $time_step $method $plot $os $start_step $end_step
     else
         echo "did not recognize response to parallel processing"
     fi
